@@ -36,24 +36,19 @@ def permutate(fragments):
     return permutations
 
 
-def degrade(audio_list, sr):
-    degradations = []
-    for audio in audio_list:
-        for (degradation, value) in preloaded_degradations:
-            degraded = mix_with_sound_data(audio, degradation, value)
-            degradations.append(degraded)
-    return degradations
+def degrade(data, sr):
+    degraded = []
+    degraded = np.concatenate((degraded, data))
+    for (degradation, value) in preloaded_degradations:
+        degradation = mix_with_sound_data(data, degradation, value)
+        degraded = np.concatenate((degraded, degradation))
+    return degraded
 
 
-def write_to_disk(permutations, degradations, speaker_count, dataset):
-    for idx, permutation in enumerate(permutations):
-        np.save("./speakers/{dataset}/sp_{count}_{permutation}"
-                .format(dataset=dataset.lower(), count=speaker_count, permutation=idx),
-                permutation)
-    for idx, degradation in enumerate(degradations):
-        np.save("./speakers/{dataset}/sp_{count}_{permutation}_deg_{degradation}"
-                .format(dataset=dataset.lower(), count=speaker_count, permutation=idx // 4, degradation=idx % 4),
-                degradation)
+def write_to_disk(features, speaker_count, dataset):
+    np.save("./speakers/{dataset}/{count}"
+            .format(dataset=dataset.lower(), count=speaker_count),
+            features)
 
 
 def load_and_concat(speaker_dir):
@@ -63,7 +58,25 @@ def load_and_concat(speaker_dir):
         data, _sr = librosa.load(audio)
         sr = _sr
         fragments.append(data)
-    return fragments, sr
+    return flatten(fragments), sr
+
+
+def extract_features(data, sr):
+    fragment_size = sr * 3
+    fragment_count = np.int32(np.floor(len(data) / fragment_size))
+    timeseries_length = 128
+    x = np.zeros((fragment_count, timeseries_length, 33), dtype=np.float64)
+    for i in range(fragment_count):
+        fragment = data[i*fragment_size:i*fragment_size+fragment_size]
+        mfcc = librosa.feature.mfcc(y=fragment, sr=sr, n_mfcc=13)
+        spectral_center = librosa.feature.spectral_centroid(y=fragment, sr=sr)
+        chroma = librosa.feature.chroma_stft(y=fragment, sr=sr)
+        spectral_contrast = librosa.feature.spectral_contrast(y=fragment, sr=sr)
+        x[i, :, 0:13] = mfcc.T[0:timeseries_length, :]
+        x[i, :, 13:14] = spectral_center.T[0:timeseries_length, :]
+        x[i, :, 14:26] = chroma.T[0:timeseries_length, :]
+        x[i, :, 26:33] = spectral_contrast.T[0:timeseries_length, :]
+    return x
 
 
 def prepare_dataset():
@@ -76,11 +89,11 @@ def prepare_dataset():
                 for speaker in os.listdir(group_dir):
                     speaker_dir = group_dir + speaker + "/"
                     if os.path.isdir(speaker_dir):
-                        print(dataset, speaker_count)
-                        fragments, sr = load_and_concat(speaker_dir)
-                        permutations = permutate(fragments)
-                        degradations = degrade(permutations, sr)
-                        write_to_disk(permutations, degradations, speaker_count=speaker_count, dataset=dataset)
+                        concated, sr = load_and_concat(speaker_dir)
+                        degraded = degrade(concated, sr)
+                        features = extract_features(degraded, sr)
+                        write_to_disk(features, speaker_count, dataset)
+                        print("Extracted features - dataset: %s - speaker: %i" % (dataset, speaker_count))
                         speaker_count += 1
 
 
