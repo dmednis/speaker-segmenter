@@ -20,7 +20,7 @@ else:
 
 print("FEATURES SHAPE", features.shape)
 
-model = load_model('model-experiment.hdf5')
+model = load_model('models/model.03.hdf5')
 
 predictions = model.predict(features, verbose=1)
 
@@ -31,11 +31,13 @@ np.save(predictions_filename, predictions)
 speaker_changes = []
 for idx, frame in enumerate(predictions):
     # print("==================FRAME ", idx, " AT ", (idx * 3) // 60, ":", (idx * 3) % 60)
-    change = round(frame[0], 2)
-    not_change = round(frame[1], 2)
-    if change > not_change:
+    no_change = round(frame[0], 2)
+    voice_ends = round(frame[1], 2)
+    new_voice = round(frame[2], 2)
+    same_voice = round(frame[3], 2)
+    if no_change < 0.5:
         speaker_changes.append(idx)
-        print(change, not_change)
+        print(no_change, new_voice, new_voice, same_voice)
         print("SPEAKER CHANGE ", idx, " AT ", (idx * 3) // 60, ":", (idx * 3) % 60)
 
 print("TOTAL CHANGES", len(speaker_changes))

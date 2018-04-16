@@ -9,8 +9,7 @@ from dataset_loader import load_dataset
 train_X, train_Y, test_X, test_Y = load_dataset()
 
 callbacks = [
-    TensorBoard(log_dir='./tensorboard_logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False,
-                write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None),
+    TensorBoard(log_dir='./tensorboard_logs', histogram_freq=0, batch_size=35),
     ModelCheckpoint("./models/model.{epoch:02d}.hdf5", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False,
                     mode='auto', period=1)
 ]
