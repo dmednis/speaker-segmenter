@@ -3,7 +3,7 @@ import librosa
 import numpy as np
 from keras.models import load_model
 
-from make_timit import extract_features
+from preprocess_speech import extract_features
 
 audio_filename = "saeima.mp3"
 features_filename = "saeima-features.npy"

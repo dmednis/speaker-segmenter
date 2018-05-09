@@ -66,7 +66,7 @@ def extract_features(data, sr):
         fragment_size = sr * 3
         fragment_count = np.int32(np.floor(len(d) / fragment_size))
         timeseries_length = 128
-        x = np.zeros((fragment_count, timeseries_length, 33), dtype=np.float64)
+        x = np.zeros((fragment_count, timeseries_length, 33), dtype=np.float16)
         for i in range(fragment_count):
             fragment = d[i*fragment_size:i*fragment_size+fragment_size]
             mfcc = librosa.feature.mfcc(y=fragment, sr=sr, n_mfcc=13, hop_length=512)
@@ -78,6 +78,15 @@ def extract_features(data, sr):
             x[i, :, 14:26] = chroma.T[0:timeseries_length, :]
             x[i, :, 26:33] = spectral_contrast.T[0:timeseries_length, :]
         features.append(x)
+    return features
+
+
+def extract_featuresv2(data, sr):
+    features = np.ndarray((0, 32))
+    for d in data:
+        mfcc = librosa.feature.mfcc(y=d, sr=sr, n_mfcc=32, hop_length=512)
+        mfcc = np.transpose(mfcc)
+        features = np.concatenate((features, mfcc))
     return features
 
 
@@ -93,7 +102,7 @@ def prepare_dataset():
                     if os.path.isdir(speaker_dir):
                         concated, sr = load_and_concat(speaker_dir)
                         with_degraded = degrade(concated, sr)
-                        features = extract_features(with_degraded, sr)
+                        features = extract_featuresv2(with_degraded, sr)
                         write_to_disk(features, speaker_count, dataset)
                         print("Extracted features - dataset: %s - speaker: %i" % (dataset, speaker_count))
                         speaker_count += 1
