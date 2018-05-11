@@ -1,11 +1,7 @@
 import os
 import glob
 import numpy as np
-import librosa
-from preprocess_speech import extract_featuresv2
 
-degradation_samples = ["ambience-pub.wav", "applause.wav",
-                       "brown-noise.wav", "white-noise.wav"]
 
 def load_dataset():
     train_x_filename = "./speakers/train_X.npy"
@@ -50,14 +46,9 @@ def prepare_dataset(dataset):
         data = np.load(speaker)
         all_speakers.append(data)
     x = np.concatenate(all_speakers)
-    frangment_count = int(np.floor(len(x) / 44))
-    valid_length = frangment_count * 44
-    x = x[:valid_length]
-    x = np.array(np.split(x, frangment_count))
     y = add_labels(x)
     return x, y
 
 
 if __name__ == "__main__":
-    prepare_dataset("train")
-    prepare_dataset("test")
+    load_dataset()

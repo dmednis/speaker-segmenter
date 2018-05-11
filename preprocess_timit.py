@@ -23,7 +23,8 @@ def preload_degradations():
 def flatten(fragments):
     global flat
     flat = []
-    for fragment in fragments:
+    for i, fragment in enumerate(fragments):
+        print(i)
         flat = np.concatenate((flat, fragment))
     return flat
 
@@ -50,10 +51,10 @@ def write_to_disk(features, speaker_count, dataset):
             features)
 
 
-def load_and_concat(speaker_dir):
+def load_and_concat(audio_dir):
     fragments = []
     sr = 0
-    for audio in glob.iglob(speaker_dir + "*.WAV"):
+    for audio in glob.iglob(audio_dir + "*.WAV"):
         data, _sr = librosa.load(audio)
         sr = _sr
         fragments.append(data)
@@ -90,7 +91,7 @@ def extract_featuresv2(data, sr):
     return features
 
 
-def prepare_dataset():
+def prepare_timit():
     for dataset in datasets:
         dataset_dir = basepath + dataset + "/"
         speaker_count = 0
@@ -106,6 +107,12 @@ def prepare_dataset():
                         write_to_disk(features, speaker_count, dataset)
                         print("Extracted features - dataset: %s - speaker: %i" % (dataset, speaker_count))
                         speaker_count += 1
+
+
+def prepare_urbansounds():
+    concated, sr = load_and_concat("./urbansounds/data/")
+    features = extract_featuresv2(concated, sr)
+    print(features.shape)
 
 
 def unzip():
@@ -131,7 +138,8 @@ def main():
     # unzip()
     setup()
     preload_degradations()
-    prepare_dataset()
+    prepare_timit()
+    prepare_urbansounds()
 
 
 if __name__ == '__main__':

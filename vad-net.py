@@ -1,11 +1,11 @@
 from keras.models import Sequential
 from keras.layers.recurrent import LSTM
-from keras.layers import Dense, TimeDistributed, Conv2D, MaxPooling2D, Flatten, InputLayer, Reshape, ZeroPadding2D, \
-    Dropout, Activation, ConvLSTM2D, BatchNormalization, Conv3D
+from keras.layers import Dense, Conv1D, MaxPooling1D
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
+import numpy as np
 
-from SpeechSequence import SpeechSequence
+from VADSequence import VADSequence
 from dataset_loader import load_dataset
 
 callbacks = [
@@ -21,10 +21,17 @@ batch_size = 30
 timeseries_length = 1
 nb_epochs = 3
 
-train_x, train_y, test_x, test_y = load_dataset()
+voice_train_x, _, voice_test_x, _ = load_dataset()
 
-train_generator = SpeechSequence(train_x, train_y, timeseries_length=timeseries_length, batch_size=batch_size)
-test_generator = SpeechSequence(test_x, test_y, timeseries_length=timeseries_length, batch_size=batch_size)
+noise = np.load("./noise/noise_x.npy")
+
+print(noise.shape)
+print(noise[0].shape)
+print(voice_train_x.shape)
+print(voice_test_x.shape)
+exit(0)
+train_generator = VADSequence(voice_train_x, noise[:], timeseries_length=timeseries_length, batch_size=batch_size)
+test_generator = VADSequence(test_x, test_y, timeseries_length=timeseries_length, batch_size=batch_size)
 
 train_sample = train_generator[0]
 test_sample = test_generator[0]
@@ -34,27 +41,26 @@ print("Test X shape: " + str(test_sample[0].shape))
 print("Test Y shape: " + str(test_sample[1].shape))
 
 print('Building CONV LSTM RNN model ...')
-input_shape = train_sample[0].shape[2:]
-num_chan = 1
+input_shape = train_sample[0].shape
+
+print(input_shape)
+
+filters = 32
+kernel_size = 3
+pool_size = 2
 
 model = Sequential()
 
-model.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                     input_shape=(None,) + input_shape,
-                     padding='same', return_sequences=True, data_format="channels_first"))
+model.add(Conv1D(filters,
+                 kernel_size,
+                 padding='valid',
+                 activation='relu',
+                 strides=1,
+                 input_shape=input_shape[1:]))
 
+model.add(MaxPooling1D(pool_size=pool_size))
 
-model.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                     padding='same', return_sequences=True, data_format="channels_first"))
-
-
-model.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                     padding='same', return_sequences=True, data_format="channels_first"))
-
-
-model.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                     padding='same', return_sequences=False, data_format="channels_first"))
-model.add(Flatten())
+model.add(LSTM(32))
 
 model.add(Dense(2, activation="softmax"))
 

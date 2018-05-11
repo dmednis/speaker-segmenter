@@ -1,16 +1,15 @@
 from keras.models import Sequential
 from keras.layers.recurrent import LSTM
-from keras.layers import Dense
+from keras.layers import Dense, TimeDistributed, Conv2D, ConvLSTM2D, MaxPooling2D, Flatten
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
-from dataset_loader import load_dataset
-
-train_X, train_Y, test_X, test_Y = load_dataset()
+from SpeakerSequence import SpeakerSequence
 
 callbacks = [
     TensorBoard(log_dir='./tensorboard_logs', histogram_freq=0, batch_size=35),
-    ModelCheckpoint("./models/model.{epoch:02d}.hdf5", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False,
+    ModelCheckpoint("./models/model.{epoch:02d}.hdf5", monitor='val_loss', verbose=0, save_best_only=False,
+                    save_weights_only=False,
                     mode='auto', period=1)
 ]
 
@@ -20,31 +19,38 @@ callbacks = [
 # SGD    : lr=0.01, momentum=0., decay=0.
 opt = Adam()
 
-batch_size = 35
+batch_size = 1
 nb_epochs = 3
 
-print("Training X shape: " + str(train_X.shape))
-print("Training Y shape: " + str(train_Y.shape))
-print("Test X shape: " + str(test_X.shape))
-print("Test Y shape: " + str(test_Y.shape))
+train_generator = SpeakerSequence("speakers/train_o", batch_size)
+test_generator = SpeakerSequence("speakers/test_o", batch_size)
 
-input_shape = (train_X.shape[1], train_X.shape[2])
+train_sample = train_generator.__getitem__(0)
+# test_sample = test_generator.__getitem__(0)
+
+print("Training X shape: " + str(train_sample[0].shape))
+print("Training Y shape: " + str(train_sample[1].shape))
+# print("Test X shape: " + str(test_sample[0].shape))
+# print("Test Y shape: " + str(test_sample[1].shape))
+
 print('Build LSTM RNN model ...')
 model = Sequential()
-model.add(LSTM(units=128, dropout=0.05, recurrent_dropout=0.35, return_sequences=True, input_shape=input_shape))
-model.add(LSTM(units=32, dropout=0.05, recurrent_dropout=0.35, return_sequences=True))
+model.add(Conv2D(32, (3, 3), data_format="channels_last", input_shape=(85, 1025, 1)))
+model.summary()
+model.add(ConvLSTM2D())
+model.add(LSTM(units=128, dropout=0.05, recurrent_dropout=0.35, return_sequences=True))
 model.add(LSTM(units=32, dropout=0.05, recurrent_dropout=0.35, return_sequences=False))
-model.add(Dense(units=train_Y.shape[1], activation='softmax'))
+model.add(Dense(units=4, activation='softmax'))
 
 print("Compiling ...")
 model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 model.summary()
 
 print("Training ...")
-model.fit(train_X, train_Y, batch_size=batch_size, epochs=nb_epochs, callbacks=callbacks)
+model.fit_generator(train_generator, batch_size=batch_size, epochs=nb_epochs, callbacks=callbacks)
 
 print("\nTesting ...")
-score, accuracy = model.evaluate(test_X, test_Y, batch_size=batch_size, verbose=1)
+score, accuracy = model.evaluate_generator(test_generator, batch_size=batch_size, verbose=1)
 print("Test loss:  ", score)
 print("Test accuracy:  ", accuracy)
 
