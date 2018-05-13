@@ -31,6 +31,25 @@ def prepare_urbansounds():
     np.save("./noise/noise_x", features)
 
 
+def flatten_urbansounds():
+    us = np.load("./noise/noise_x.npy")
+    print("determining total length")
+    total = 0
+    for sound in us:
+        total += sound.shape[0]
+    flat = np.ndarray((total, us[0].shape[1]))
+    print("final shape ", flat.shape)
+    print("populating")
+    pointer = 0
+    for i, sound in enumerate(us):
+        print("populating ", i)
+        start = pointer
+        end = start + sound.shape[0]
+        flat[start:end] = sound
+        pointer = end
+    np.save("./noise/noise_x_flat", flat)
+
+
 def clean():
     shutil.rmtree("./noise", ignore_errors=True)
 
@@ -42,8 +61,9 @@ def setup():
 
 def main():
     # clean()
-    setup()
-    prepare_urbansounds()
+    # setup()
+    # prepare_urbansounds()
+    flatten_urbansounds()
 
 
 if __name__ == '__main__':

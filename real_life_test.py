@@ -3,7 +3,8 @@ import librosa
 import numpy as np
 from keras.models import load_model
 
-from preprocess_speech import extract_features
+from preprocess_urbansounds import extract_features
+from VADSequence import VADSequence
 
 audio_filename = "saeima.mp3"
 features_filename = "saeima-features.npy"
@@ -20,7 +21,14 @@ else:
 
 print("FEATURES SHAPE", features.shape)
 
-model = load_model('models/model.03.hdf5')
+model = load_model('models/model_vad.01.hdf5')
+
+series = 44
+
+voice_fragment_count = int(np.floor(len(features) / series))
+valid_voice_length = voice_fragment_count * series
+features = features[:valid_voice_length]
+features = np.array(np.split(features, voice_fragment_count))
 
 predictions = model.predict(features, verbose=1)
 
@@ -28,16 +36,11 @@ print("PREDICTIONS SHAPE", predictions.shape)
 
 np.save(predictions_filename, predictions)
 
-speaker_changes = []
-for idx, frame in enumerate(predictions):
-    # print("==================FRAME ", idx, " AT ", (idx * 3) // 60, ":", (idx * 3) % 60)
-    no_change = round(frame[0], 2)
-    voice_ends = round(frame[1], 2)
-    new_voice = round(frame[2], 2)
-    same_voice = round(frame[3], 2)
-    if no_change < 0.5:
-        speaker_changes.append(idx)
-        print(no_change, new_voice, new_voice, same_voice)
-        print("SPEAKER CHANGE ", idx, " AT ", (idx * 3) // 60, ":", (idx * 3) % 60)
 
-print("TOTAL CHANGES", len(speaker_changes))
+for idx, frame in enumerate(predictions):
+    print("==================FRAME ", idx, " AT ", (idx * 1) // 60, ":", (idx * 1) % 60)
+    val = round(frame[0], 2)
+    print(frame[0])
+    print(val)
+    if val > 0.5:
+        print("*************VOICE*************")
