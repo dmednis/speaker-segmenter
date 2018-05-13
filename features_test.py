@@ -3,7 +3,7 @@ import librosa
 import librosa.display
 import numpy as np
 
-from preprocess_speech import load_and_concat, degrade, flatten, preload_degradations
+from preprocess_timit import load_and_concat, degrade, flatten, preload_degradations
 
 
 def extract_features(data, sr):
@@ -28,41 +28,30 @@ def extract_features(data, sr):
 
 
 def main():
-    concated, sr = load_and_concat("timit/data/lisa/data/timit/raw/TIMIT/TRAIN/DR4/FALR0/")
+    # concated, sr = load_and_concat("./voice_raw/timit/data/lisa/data/timit/raw/TIMIT/TRAIN/DR4/FALR0/")
+    concated, sr = load_and_concat("./noise_raw/urbansounds/data/siren/16772.wav")
 
-    with_degraded = degrade(concated, sr)
-    data = flatten(with_degraded)
+    print(concated)
+    print(sr)
+
+    # with_degraded = degrade(concated, sr)
+    data = np.array(concated)
 
     print("DATA", data.shape, data.shape[0] / sr)
 
-    mfcc = librosa.feature.mfcc(y=data, sr=sr, n_mfcc=32, hop_length=512)
-    mfcc = np.transpose(mfcc)
+    S = librosa.feature.melspectrogram(data, sr=sr, n_mels=128)
 
-    print(mfcc.shape)
+    # Convert to log scale (dB). We'll use the peak power (max) as reference.
+    log_S = librosa.power_to_db(S, ref=np.max)
 
-    plt.figure(figsize=(10, 4))
-    librosa.display.specshow(mfcc, x_axis='time')
-    plt.colorbar()
-    plt.title('MFCC')
+    print(log_S.shape)
+
+    plt.figure(figsize=(12, 4))
+    librosa.display.specshow(log_S, sr=sr, x_axis='time', y_axis='mel')
+    plt.title('Mel power spectrogram ')
+    plt.colorbar(format='%+02.0f dB')
     plt.tight_layout()
     plt.show()
-
-    # librosa.output.write_wav('features_test.wav', data, 22050)
-    #
-    # # And compute the spectrogram magnitude and phase
-    # S_full = librosa.stft(data)
-    #
-    # print("STFT", np.transpose(S_full).shape)
-    # #
-    # rp = np.max(np.abs(S_full))
-    #
-    # plt.figure(figsize=(12, 8))
-    #
-    # plt.subplot(3, 1, 1)
-    # librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=rp), y_axis='log', x_axis='time')
-    # plt.colorbar()
-    # plt.title('Full spectrogram')
-    # plt.show()
 
 
 if __name__ == '__main__':

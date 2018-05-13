@@ -11,7 +11,7 @@ from dataset_loader import load_dataset
 opt = Adam()
 
 batch_size = 20
-timeseries_length = 44
+timeseries_length = 87
 nb_epochs = 5
 
 voice_train_x, _, voice_test_x, _ = load_dataset()

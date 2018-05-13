@@ -21,9 +21,9 @@ else:
 
 print("FEATURES SHAPE", features.shape)
 
-model = load_model('models/model_vad.01.hdf5')
+model = load_model('models/model_vad.02.hdf5')
 
-series = 44
+series = 87
 
 voice_fragment_count = int(np.floor(len(features) / series))
 valid_voice_length = voice_fragment_count * series
@@ -38,7 +38,7 @@ np.save(predictions_filename, predictions)
 
 
 for idx, frame in enumerate(predictions):
-    print("==================FRAME ", idx, " AT ", (idx * 1) // 60, ":", (idx * 1) % 60)
+    print("==================FRAME ", idx, " AT ", (idx * 2) // 60, ":", (idx * 2) % 60)
     val = round(frame[0], 2)
     print(frame[0])
     print(val)
