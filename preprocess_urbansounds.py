@@ -37,7 +37,7 @@ def setup():
 
 def main():
     # clean()
-    # setup()
+    setup()
     prepare_urbansounds()
 
 
