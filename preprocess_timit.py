@@ -8,7 +8,7 @@ import numpy as np
 from utils import load_and_concat, extract_features, degrade, ensure_dirs
 
 
-basepath = "./speech_raw/timit/data/lisa/data/timit/raw/TIMIT/"
+basepath = "./voice_raw/timit/data/lisa/data/timit/raw/TIMIT/"
 datasets = ["TEST", "TRAIN"]
 
 
@@ -28,7 +28,7 @@ def prepare_timit():
                 for speaker in os.listdir(group_dir):
                     speaker_dir = group_dir + speaker + "/"
                     if os.path.isdir(speaker_dir):
-                        concated, sr = load_and_concat(speaker_dir)
+                        concated, sr = load_and_concat(speaker_dir + "/*.WAV")
                         with_degraded = degrade(concated, sr)
                         features = extract_features(with_degraded, sr)
                         write_to_disk(features, speaker_count)
