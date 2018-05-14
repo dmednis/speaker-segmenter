@@ -32,6 +32,13 @@ def flatten(fragments):
     return flat
 
 
+def train_test_split(data, test_split):
+    samples = len(data)
+    test_samples = int(np.floor(samples * test_split))
+    train_samples = samples - test_samples
+    return data[:train_samples], data[train_samples:]
+
+
 def permutate(fragments):
     permutations = []
     for perm in range(1):

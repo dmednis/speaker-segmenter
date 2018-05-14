@@ -12,7 +12,7 @@ def prepare_urbansounds():
     features = []
     files = glob.glob("./noise_raw/urbansounds/data/**/*.wav")
     for i, file in enumerate(files):
-        print(str(i + 1) + "loading: " + file)
+        print(str(i + 1) + " loading: " + file)
         try:
             data, _sr = librosa.load(file)
         except:

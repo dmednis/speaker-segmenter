@@ -5,28 +5,32 @@ from keras.optimizers import Adam, SGD
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import numpy as np
 from matplotlib import pyplot
+
+from utils import train_test_split, ensure_dirs
 from VADSequence import VADSequence
-from dataset_loader import load_dataset
+from dataset_loader import vad_voice, vad_noise
+
+ensure_dirs(["./models"])
 
 opt = Adam()
 
 batch_size = 20
-timeseries_length = 87
-nb_epochs = 5
+timeseries_length = 44
+nb_epochs = 20
 
-voice_train_x, _, voice_test_x, _ = load_dataset()
+voice = vad_voice()
+noise = vad_noise()
 
-noise = np.load("./noise/noise_x_flat.npy")
-noise_test = noise[:700000]
-noise_train = noise[700000:]
+noise_train, noise_test = train_test_split(noise, 0.25)
+voice_train, voice_test = train_test_split(voice, 0.25)
 
 print("Noise train set shape", noise_train.shape)
 print("Noise test set shape", noise_test.shape)
-print("Voice train set shape", voice_train_x.shape)
-print("Voice test set shape", voice_test_x.shape)
+print("Voice train set shape", voice_train.shape)
+print("Voice test set shape", voice_test.shape)
 
-train_generator = VADSequence(voice_train_x, noise_train, timeseries_length=timeseries_length, batch_size=batch_size)
-test_generator = VADSequence(voice_test_x, noise_test, timeseries_length=timeseries_length, batch_size=batch_size)
+train_generator = VADSequence(voice_train, noise_train, timeseries_length=timeseries_length, batch_size=batch_size)
+test_generator = VADSequence(voice_test, noise_test, timeseries_length=timeseries_length, batch_size=batch_size)
 
 train_sample = train_generator[0]
 test_sample = test_generator[0]
@@ -53,37 +57,37 @@ model.add(Conv1D(32,
                  strides=1,
                  input_shape=input_shape[1:]))
 
-# model.add(Conv1D(64,
-#                  3,
-#                  padding='valid',
-#                  activation='relu',
-#                  strides=1))
+model.add(Conv1D(64,
+                 3,
+                 padding='valid',
+                 activation='relu',
+                 strides=1))
 
-# model.add(Conv1D(128,
-#                  3,
-#                  padding='valid',
-#                  activation='relu',
-#                  strides=1))
-#
-# model.add(MaxPooling1D(pool_size=2))
+model.add(Conv1D(128,
+                 3,
+                 padding='valid',
+                 activation='relu',
+                 strides=1))
+
+model.add(MaxPooling1D(pool_size=2))
 
 model.add(Dropout(0.5))
 
-model.add(LSTM(64))
+model.add(LSTM(64, return_sequences=True))
 
-# model.add(LSTM(256))
-#
-# model.add(Dropout(0.4))
-#
-# model.add(Dense(128, activation="relu"))
-#
-# model.add(Dropout(0.3))
-#
-# model.add(Dense(64, activation="relu"))
+model.add(LSTM(256))
+
+model.add(Dropout(0.4))
+
+model.add(Dense(128, activation="relu"))
 
 model.add(Dropout(0.3))
 
-# model.add(Dense(32, activation="relu"))
+model.add(Dense(64, activation="relu"))
+
+model.add(Dropout(0.3))
+
+model.add(Dense(32, activation="relu"))
 
 model.add(Dense(1, activation="sigmoid"))
 

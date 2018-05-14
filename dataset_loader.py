@@ -6,7 +6,7 @@ from utils import flatten
 
 
 def load_or_generate(filename, generator):
-    if (os.path.isfile(filename)):
+    if os.path.isfile(filename):
         print("Loading " + filename)
         dataset = np.load(filename)
         return dataset
@@ -27,7 +27,11 @@ def generate_vad_voice():
 
 
 def vad_voice():
-    load_or_generate("./speakers/vad_voice", generate_vad_voice)
+    return load_or_generate("./speakers/vad_voice.npy", generate_vad_voice)
+
+
+def vad_noise():
+    return np.load("./noise/vad_noise.npy")
 
 
 if __name__ == "__main__":
