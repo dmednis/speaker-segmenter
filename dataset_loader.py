@@ -17,8 +17,8 @@ def load_or_generate(filename, generator):
         return dataset
 
 
-def generate_vad_voice():
-    speakers = glob.glob("./speakers/TIMIT/*.npy")
+def generate_vad_voice(folder):
+    speakers = glob.glob("./speakers/" + folder + "/*.npy")
     all_speakers = []
     for speaker in speakers:
         data = np.load(speaker)
@@ -26,13 +26,31 @@ def generate_vad_voice():
     return flatten(all_speakers)
 
 
-def vad_voice():
-    return load_or_generate("./speakers/vad_voice.npy", generate_vad_voice)
+def generate_vad_voice_train():
+    return flatten([generate_vad_voice("TIMIT"), generate_vad_voice("LJ")])
 
 
-def vad_noise():
-    return np.load("./noise/vad_noise.npy")
+def generate_vad_voice_test():
+    return generate_vad_voice("LIBRISPEECH")
+
+
+def vad_voice_train():
+    return load_or_generate("./speakers/vad_voice_train.npy", generate_vad_voice_train)
+
+
+def vad_voice_test():
+    return load_or_generate("./speakers/vad_voice_test.npy", generate_vad_voice_test)
+
+
+def vad_noise_train():
+    urbansounds = np.load("./noise/vad_noise.npy")
+    return urbansounds
+
+
+def vad_noise_test():
+    ambience = np.load("./noise/ambience.npy")
+    return ambience
 
 
 if __name__ == "__main__":
-    vad_voice()
+    print("MAIN")

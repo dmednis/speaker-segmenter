@@ -1,4 +1,3 @@
-import random
 import numpy as np
 from keras.utils import Sequence
 
@@ -14,11 +13,13 @@ class VADSequence(Sequence):
         valid_voice_length = voice_fragment_count * self.timeseries_length
         self.voice = self.voice[:valid_voice_length]
         self.voice = np.array(np.split(self.voice, voice_fragment_count))
+        np.random.shuffle(self.voice)
 
         noise_fragment_count = int(np.floor(len(self.noise) / self.timeseries_length))
         valid_noise_length = noise_fragment_count * self.timeseries_length
         self.noise = self.noise[:valid_noise_length]
         self.noise = np.array(np.split(self.noise, noise_fragment_count))
+        np.random.shuffle(self.noise)
 
     def __len__(self):
 
@@ -26,8 +27,6 @@ class VADSequence(Sequence):
             min(np.floor(len(self.voice) / self.batch_size / 2), np.floor(len(self.noise) / self.batch_size / 2)))
 
     def __getitem__(self, idx):
-        # noise_len = random.randint(0, self.batch_size)
-        # voice_len = self.batch_size - noise_len
 
         noise_len = voice_len = int(self.batch_size / 2)
 
@@ -39,9 +38,15 @@ class VADSequence(Sequence):
         batch_y = []
         for i in range(len(batch_x)):
             if i < noise_len:
-                batch_y.append(0)
+                batch_y.append([[0] for _ in range(self.timeseries_length)])
             else:
-                batch_y.append(1)
+                batch_y.append([[1] for _ in range(self.timeseries_length)])
         batch_y = np.array(batch_y)
+
+        s = np.arange(batch_x.shape[0])
+        np.random.shuffle(s)
+
+        batch_x = batch_x[s]
+        batch_y = batch_y[s]
 
         return batch_x, batch_y

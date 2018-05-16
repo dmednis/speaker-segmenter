@@ -2,28 +2,25 @@ import os
 import librosa
 import numpy as np
 from keras.models import load_model
+import matplotlib.pyplot as plt
 
-from preprocess_urbansounds import extract_features
-from VADSequence import VADSequence
+from utils import extract_features, flatten
 
-audio_filename = "saeima.mp3"
-features_filename = "saeima-features.npy"
-predictions_filename = "saeima-predictions.npy"
+audio_filename = "noise_raw/ambient-silence.wav"
+# features_filename = "./samples/saeima-features.npy"
+# predictions_filename = "./samples/saeima-predictions.npy"
 
-if os.path.isfile(features_filename):
-    features = np.load(features_filename)
-else:
-    data, sr = librosa.load(audio_filename)
-    print("SAMPLE RATE", sr)
-    print("DATA SHAPE", data.shape)
-    features = extract_features(data, sr)
-    np.save(features_filename, features)
+data, sr = librosa.load(audio_filename)
+print("SAMPLE RATE", sr)
+print("DATA SHAPE", data.shape)
+features = extract_features(data, sr)
+# np.save(features_filename, features)
 
 print("FEATURES SHAPE", features.shape)
 
-model = load_model('models/model_vad.02.hdf5')
+model = load_model('models/2018-05-15_19-22/model_vad.15.hdf5')
 
-series = 87
+series = 44
 
 voice_fragment_count = int(np.floor(len(features) / series))
 valid_voice_length = voice_fragment_count * series
@@ -34,13 +31,24 @@ predictions = model.predict(features, verbose=1)
 
 print("PREDICTIONS SHAPE", predictions.shape)
 
-np.save(predictions_filename, predictions)
+# np.save(predictions_filename, predictions)
+
+predictions = flatten(flatten(predictions))
+
+print("PREDICTIONS SHAPE", predictions.shape)
+print("PREDICTIONS", predictions)
+
+for i, pred in enumerate(predictions):
+    if pred >= 0.5:
+        predictions[i] = 1
+    else:
+        predictions[i] = 0
 
 
-for idx, frame in enumerate(predictions):
-    print("==================FRAME ", idx, " AT ", (idx * 2) // 60, ":", (idx * 2) % 60)
-    val = round(frame[0], 2)
-    print(frame[0])
-    print(val)
-    if val > 0.5:
-        print("*************VOICE*************")
+plt.figure(1)
+plt.subplot(211)
+plt.plot(data)
+
+plt.subplot(212)
+plt.plot(predictions)
+plt.show()

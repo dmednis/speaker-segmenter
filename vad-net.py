@@ -1,28 +1,32 @@
 from keras.models import Sequential
-from keras.layers.recurrent import LSTM
-from keras.layers import Dense, Conv1D, MaxPooling1D, Dropout
+from keras.layers.recurrent import LSTM, GRU
+from keras.layers import Dense, Conv1D, MaxPooling1D, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D
 from keras.optimizers import Adam, SGD
 from keras.callbacks import TensorBoard, ModelCheckpoint
-import numpy as np
+import datetime
 from matplotlib import pyplot
 
-from utils import train_test_split, ensure_dirs
+from utils import train_test_split, ensure_dirs, shuffle
 from VADSequence import VADSequence
-from dataset_loader import vad_voice, vad_noise
+from dataset_loader import vad_voice_train, vad_noise_train, vad_voice_test, vad_noise_test
 
-ensure_dirs(["./models"])
+run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-opt = Adam()
+ensure_dirs(["./models", "./models/" + run])
+
+opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, decay=0.01)
 
 batch_size = 20
 timeseries_length = 44
-nb_epochs = 20
+nb_epochs = 15
 
-voice = vad_voice()
-noise = vad_noise()
+voice_train = vad_voice_train()
+noise_train = vad_noise_train()
 
-noise_train, noise_test = train_test_split(noise, 0.25)
-voice_train, voice_test = train_test_split(voice, 0.25)
+voice_test = vad_voice_test()
+noise_test = vad_noise_test()
+
+ratio = voice_train.shape[0] / noise_train.shape[0]
 
 print("Noise train set shape", noise_train.shape)
 print("Noise test set shape", noise_test.shape)
@@ -50,54 +54,42 @@ print(input_shape)
 
 model = Sequential()
 
-model.add(Conv1D(32,
-                 3,
-                 padding='valid',
-                 activation='relu',
-                 strides=1,
-                 input_shape=input_shape[1:]))
-
-model.add(Conv1D(64,
-                 3,
-                 padding='valid',
-                 activation='relu',
-                 strides=1))
+model.add(ZeroPadding1D(1,
+                        input_shape=input_shape[1:]))
 
 model.add(Conv1D(128,
                  3,
                  padding='valid',
-                 activation='relu',
-                 strides=1))
+                 activation='relu'))
 
-model.add(MaxPooling1D(pool_size=2))
+model.add(BatchNormalization())
 
-model.add(Dropout(0.5))
+model.add(Dropout(0.6))
 
-model.add(LSTM(64, return_sequences=True))
-
-model.add(LSTM(256))
+model.add(GRU(128, return_sequences=True))
 
 model.add(Dropout(0.4))
 
-model.add(Dense(128, activation="relu"))
+model.add(BatchNormalization())
 
-model.add(Dropout(0.3))
+model.add(GRU(128, return_sequences=True))
 
-model.add(Dense(64, activation="relu"))
+model.add(Dropout(0.4))
 
-model.add(Dropout(0.3))
+model.add(BatchNormalization())
 
-model.add(Dense(32, activation="relu"))
+model.add(Dropout(0.4))
 
-model.add(Dense(1, activation="sigmoid"))
+model.add(TimeDistributed(Dense(1, activation="sigmoid")))
 
 print("Compiling ...")
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 model.summary()
 
 callbacks = [
-    TensorBoard(log_dir='./tensorboard_logs', histogram_freq=0, batch_size=batch_size),
-    ModelCheckpoint("./models/model_vad.{epoch:02d}.hdf5", monitor='val_loss', verbose=0, save_best_only=False,
+    TensorBoard(log_dir='./tensorboard_logs/' + run, histogram_freq=0, batch_size=batch_size),
+    ModelCheckpoint("./models/" + run + "/model_vad.{epoch:02d}.hdf5", monitor='val_loss', verbose=0,
+                    save_best_only=False,
                     save_weights_only=False,
                     mode='auto', period=1)
 ]
@@ -106,7 +98,10 @@ print("Training ...")
 history = model.fit_generator(train_generator,
                               epochs=nb_epochs,
                               validation_data=test_generator,
-                              callbacks=callbacks)
+                              callbacks=callbacks,
+                              # class_weight={0: ratio,
+                              #               1: 1.}
+                              )
 
 pyplot.plot(history.history['loss'])
 pyplot.plot(history.history['val_loss'])

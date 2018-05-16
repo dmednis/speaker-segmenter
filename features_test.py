@@ -7,20 +7,20 @@ from utils import load_and_concat, degrade, flatten, preload_degradations
 
 
 def main():
-    # concated, sr = load_and_concat("./voice_raw/timit/data/lisa/data/timit/raw/TIMIT/TRAIN/DR4/FALR0/")
-    concated, sr = load_and_concat("./noise_raw/urbansounds/data/siren/16772.wav")
+    concated, sr = load_and_concat("./voice_raw/timit/data/lisa/data/timit/raw/TIMIT/TRAIN/DR4/FALR0/*.WAV")
+    # concated, sr = load_and_concat("./noise_raw/urbansounds/data/siren/16772.wav")
 
     print(concated)
     print(sr)
     sec = len(concated) / sr
     print(sec)
 
-    # with_degraded = degrade(concated, sr)
-    data = concated
+    with_degraded = degrade(concated, sr)
+    data = with_degraded
 
     print("DATA", data.shape, data.shape[0] / sr)
 
-    S = librosa.feature.melspectrogram(data, sr=sr, n_mels=128)
+    S = librosa.feature.melspectrogram(data, sr=sr, n_mels=128, fmax=8000, power=1)
 
     # Convert to log scale (dB). We'll use the peak power (max) as reference.
     log_S = librosa.power_to_db(S, ref=np.max)

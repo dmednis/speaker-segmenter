@@ -85,3 +85,7 @@ def degrade(data, sr):
         degradation = mix_with_sound_data(data, degradation, value)
         degraded.append(degradation)
     return flatten(degraded)
+
+
+def shuffle(x):
+    np.random.shuffle(x)
