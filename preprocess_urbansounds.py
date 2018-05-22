@@ -5,7 +5,7 @@ import glob
 import os
 import numpy as np
 
-from utils import extract_features, ensure_dirs, flatten
+from utils import extract_features, ensure_dirs, flatten, shuffle
 
 
 def prepare_urbansounds():
@@ -22,6 +22,7 @@ def prepare_urbansounds():
         features.append(f)
         if i > 0 and i % 100 == 0:
             np.save("./noise/vad_noise_" + str(i), flatten(features))
+    shuffle(features)
     features = flatten(features)
     print(features.shape)
     np.save("./noise/vad_noise", features)
