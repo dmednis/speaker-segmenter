@@ -59,6 +59,44 @@ def load_and_concat(audio_dir):
 
 
 def extract_features(data, sr):
+    frame_length = int(np.floor(0.032 * sr))
+    hop_length = int(np.floor(0.016 * sr))
+
+    stft = np.abs(librosa.stft(data, win_length=frame_length, hop_length=hop_length)) ** 2
+    spectrogram = librosa.feature.melspectrogram(S=stft, y=data)
+    mfcc = librosa.feature.mfcc(S=librosa.power_to_db(spectrogram), n_mfcc=11)
+    rmse = librosa.feature.rmse(S=spectrogram, frame_length=frame_length, hop_length=hop_length)
+
+    mfcc_1 = librosa.feature.delta(mfcc)
+    mfcc_2 = librosa.feature.delta(mfcc, order=2)
+    rmse_1 = librosa.feature.delta(rmse)
+    rmse_2 = librosa.feature.delta(rmse, order=2)
+
+    mfcc = np.transpose(mfcc)
+    mfcc_1 = np.transpose(mfcc_1)
+    mfcc_2 = np.transpose(mfcc_2)
+    rmse_1 = np.transpose(rmse_1)
+    rmse_2 = np.transpose(rmse_2)
+
+    frames = min(len(mfcc),
+                 len(mfcc_1),
+                 len(mfcc_2),
+                 len(rmse_1),
+                 len(rmse_2))
+
+    features = np.zeros((len(mfcc), 35))
+
+    for i in range(frames):
+        features[i, 0:11] = mfcc[i]
+        features[i, 11:22] = mfcc_1[i]
+        features[i, 22:33] = mfcc_2[i]
+        features[i, 33] = rmse_1[i]
+        features[i, 34] = rmse_2[i]
+
+    return features
+
+
+def extract_features_v2(data, sr):
     n_features = 128
     melspec = librosa.feature.melspectrogram(data, sr=sr, n_mels=n_features)
     melspec = librosa.power_to_db(melspec, ref=np.max)

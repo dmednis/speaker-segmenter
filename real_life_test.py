@@ -4,9 +4,9 @@ import numpy as np
 from keras.models import load_model
 import matplotlib.pyplot as plt
 
-from utils import extract_features, flatten
+from utils import extract_features, extract_features_v2, flatten
 
-audio_filename = "noise_raw/ambient-silence.wav"
+audio_filename = "./samples/saeima.wav"
 # features_filename = "./samples/saeima-features.npy"
 # predictions_filename = "./samples/saeima-predictions.npy"
 
@@ -14,11 +14,15 @@ data, sr = librosa.load(audio_filename)
 print("SAMPLE RATE", sr)
 print("DATA SHAPE", data.shape)
 features = extract_features(data, sr)
+features2 = extract_features_v2(data, sr)
 # np.save(features_filename, features)
 
 print("FEATURES SHAPE", features.shape)
+print("FEATURES 2 SHAPE", features2.shape)
 
-model = load_model('models/2018-05-15_19-22/model_vad.15.hdf5')
+exit(0)
+
+model = load_model('models/2018-05-22_13-29/model_vad2.15.hdf5')
 
 series = 44
 
