@@ -1,33 +1,29 @@
 from keras.models import Sequential
-from keras.layers.recurrent import LSTM, GRU
-from keras.layers import Dense, Conv1D, MaxPooling1D, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D, Bidirectional
-from keras.optimizers import Adam, SGD
+from keras.layers.recurrent import LSTM
+from keras.layers import Dense, TimeDistributed, Bidirectional
+from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import datetime
 from matplotlib import pyplot
 
-from utils import train_test_split, ensure_dirs, shuffle
+from utils import ensure_dirs
 from VADSequence import VADSequence
 from dataset_loader import vad_voice_train, vad_noise_train, vad_voice_test, vad_noise_test
 
 model_name = "vad2"
 run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-ensure_dirs(["./models", "./models/" + run])
-
 opt = Adam()
 
-batch_size = 20
-timeseries_length = 44
-nb_epochs = 15
+batch_size = 100
+timeseries_length = 100
+nb_epochs = 30
 
 voice_train = vad_voice_train()
 noise_train = vad_noise_train()
 
 voice_test = vad_voice_test()
 noise_test = vad_noise_test()
-
-ratio = voice_train.shape[0] / noise_train.shape[0]
 
 print("Noise train set shape", noise_train.shape)
 print("Noise test set shape", noise_test.shape)
@@ -44,10 +40,8 @@ print("Training Y shape: " + str(train_sample[1].shape))
 print("Test X shape: " + str(test_sample[0].shape))
 print("Test Y shape: " + str(test_sample[1].shape))
 
-print('Building CONV LSTM RNN model ...')
+print('Building LSTM RNN model ...')
 input_shape = train_sample[0].shape
-
-print(input_shape)
 
 model = Sequential()
 
@@ -74,6 +68,8 @@ callbacks = [
 ]
 
 print("Training ...")
+ensure_dirs(["./models", "./models/" + model_name + "_" + run])
+
 history = model.fit_generator(train_generator,
                               epochs=nb_epochs,
                               validation_data=test_generator,
