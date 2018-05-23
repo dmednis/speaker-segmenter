@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 
 from utils import extract_features, extract_features_v2, flatten
 
-audio_filename = "./samples/saeima.wav"
+# audio_filename = "./samples/saeima.wav"
+audio_filename = "./samples/speech-test.wav"
 # features_filename = "./samples/saeima-features.npy"
 # predictions_filename = "./samples/saeima-predictions.npy"
 
@@ -14,24 +15,26 @@ data, sr = librosa.load(audio_filename)
 print("SAMPLE RATE", sr)
 print("DATA SHAPE", data.shape)
 features = extract_features(data, sr)
-features2 = extract_features_v2(data, sr)
-# np.save(features_filename, features)
 
 print("FEATURES SHAPE", features.shape)
-print("FEATURES 2 SHAPE", features2.shape)
 
-exit(0)
+model = load_model('models/vad2_2018-05-23_12-26/model_vad2.06.hdf5')
 
-model = load_model('models/2018-05-22_13-29/model_vad2.15.hdf5')
+timeseries_length = 100
+hop_length = 25
 
-series = 44
+length = 0
+remainder = len(features)
+while remainder >= timeseries_length:
+    length += 1
+    remainder -= hop_length
 
-voice_fragment_count = int(np.floor(len(features) / series))
-valid_voice_length = voice_fragment_count * series
-features = features[:valid_voice_length]
-features = np.array(np.split(features, voice_fragment_count))
+x = np.ndarray((length, timeseries_length, features.shape[1]))
 
-predictions = model.predict(features, verbose=1)
+for i in range(length):
+    x[i] = features[i * hop_length:i * hop_length + timeseries_length]
+
+predictions = model.predict(x, verbose=1)
 
 print("PREDICTIONS SHAPE", predictions.shape)
 
