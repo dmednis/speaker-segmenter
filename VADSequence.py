@@ -58,6 +58,7 @@ class VADSequence(Sequence):
         for i in range(self.batch_size):
             batch_x[i] = self.x[batch_start + (i * self.hop_length):batch_start + (
                         i * self.hop_length) + self.timeseries_length]
-            batch_y[i] = self.y[batch_start + i:batch_start + i + self.timeseries_length]
+            batch_y[i] = self.y[batch_start + (i * self.hop_length):batch_start + (
+                        i * self.hop_length) + self.timeseries_length]
 
         return batch_x, batch_y
