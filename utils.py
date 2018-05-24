@@ -58,7 +58,7 @@ def load_and_concat(audio_dir):
     return flatten(fragments), sr
 
 
-def extract_features(data, sr):
+def extract_features_mfcc(data, sr):
     frame_length = int(np.floor(0.032 * sr))
     hop_length = int(np.floor(0.016 * sr))
 
@@ -96,12 +96,14 @@ def extract_features(data, sr):
     return features
 
 
-def extract_features_v2(data, sr):
-    n_features = 128
+def extract_features_melspec(data, sr):
+    n_features = 64
     melspec = librosa.feature.melspectrogram(data, sr=sr, n_mels=n_features)
     melspec = librosa.power_to_db(melspec, ref=np.max)
     melspec = np.transpose(melspec)
-    return melspec
+    melspec_d = librosa.feature.delta(melspec)
+    features = np.hstack((melspec, melspec_d))
+    return features
 
 
 degradation_samples = [("ambience-pub.wav", 11), ("applause.wav", 12),

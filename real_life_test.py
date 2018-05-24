@@ -4,7 +4,7 @@ import numpy as np
 from keras.models import load_model
 import matplotlib.pyplot as plt
 
-from utils import extract_features, extract_features_v2, flatten
+from utils import extract_features_melspec, extract_features_mfcc, flatten
 
 # audio_filename = "./samples/saeima.wav"
 audio_filename = "./samples/speech-test.wav"
@@ -14,7 +14,7 @@ audio_filename = "./samples/speech-test.wav"
 data, sr = librosa.load(audio_filename)
 print("SAMPLE RATE", sr)
 print("DATA SHAPE", data.shape)
-features = extract_features(data, sr)
+features = extract_features_melspec(data, sr)
 
 print("FEATURES SHAPE", features.shape)
 

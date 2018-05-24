@@ -5,7 +5,7 @@ import glob
 import os
 import numpy as np
 
-from utils import load_and_concat, extract_features, degrade, ensure_dirs
+from utils import load_and_concat, extract_features_melspec, degrade, ensure_dirs
 
 
 basepath = "./voice_raw/timit/data/lisa/data/timit/raw/TIMIT/"
@@ -30,7 +30,7 @@ def prepare_timit():
                     if os.path.isdir(speaker_dir):
                         concated, sr = load_and_concat(speaker_dir + "/*.WAV")
                         with_degraded = degrade(concated, sr)
-                        features = extract_features(with_degraded, sr)
+                        features = extract_features_melspec(with_degraded, sr)
                         write_to_disk(features, speaker_count)
                         print("Extracted features - TIMIT - speaker: %i" % speaker_count)
                         speaker_count += 1

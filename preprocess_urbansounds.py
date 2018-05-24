@@ -5,7 +5,7 @@ import glob
 import os
 import numpy as np
 
-from utils import extract_features, ensure_dirs, flatten, shuffle
+from utils import extract_features_melspec, ensure_dirs, flatten, shuffle
 
 
 def prepare_urbansounds():
@@ -18,7 +18,7 @@ def prepare_urbansounds():
         except:
             continue
         sr = _sr
-        f = extract_features(data, sr)
+        f = extract_features_melspec(data, sr)
         features.append(f)
         if i > 0 and i % 100 == 0:
             np.save("./noise/vad_noise_" + str(i), flatten(features))

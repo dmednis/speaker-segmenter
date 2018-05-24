@@ -5,7 +5,7 @@ import glob
 import os
 import numpy as np
 
-from utils import extract_features, ensure_dirs, flatten
+from utils import extract_features_melspec, ensure_dirs, flatten
 
 filepath = "./noise_raw/ambient-silence.wav"
 
@@ -14,7 +14,7 @@ def prepare_file():
     print("Loading: " + filepath)
     data, sr = librosa.load(filepath)
     print("Extracting features: " + filepath)
-    features = extract_features(data, sr)
+    features = extract_features_melspec(data, sr)
     print(features.shape)
     np.save("./noise/ambience", features)
 

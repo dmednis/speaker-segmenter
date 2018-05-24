@@ -2,7 +2,7 @@ import shutil
 import os
 import numpy as np
 
-from utils import load_and_concat, extract_features, degrade, ensure_dirs, rm_dirs
+from utils import load_and_concat, extract_features_melspec, degrade, ensure_dirs, rm_dirs
 
 
 def write_to_disk(features, speaker_count):
@@ -18,7 +18,7 @@ def prepare_librispeech():
         speaker_dir = libredir + speaker + "/"
         if os.path.isdir(speaker_dir):
             concated, sr = load_and_concat(speaker_dir + "/**/*.flac")
-            features = extract_features(concated, sr)
+            features = extract_features_melspec(concated, sr)
             write_to_disk(features, speaker_count)
             print("Extracted features - LIBRE - speaker: %i" % speaker_count)
             speaker_count += 1
