@@ -1,6 +1,6 @@
 from keras.models import Sequential
 from keras.layers.recurrent import GRU
-from keras.layers import Dense, Conv1D, LeakyReLU, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D
+from keras.layers import Dense, Conv1D, LeakyReLU, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D, CuDNNGRU
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import datetime
@@ -12,6 +12,7 @@ from dataset_loader import vad_voice_train, vad_noise_train, vad_voice_test, vad
 
 model_name = "vad2"
 run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+gpu = True
 
 ensure_dirs(["./models", "./models/" + run])
 
@@ -49,6 +50,8 @@ input_shape = train_sample[0].shape
 
 print(input_shape)
 
+recurrent_layer = CuDNNGRU if gpu else GRU
+
 model = Sequential()
 
 model.add(ZeroPadding1D(1,
@@ -70,7 +73,7 @@ model.add(BatchNormalization())
 
 model.add(Dropout(0.4))
 
-model.add(GRU(64, return_sequences=True))
+model.add(recurrent_layer(64, return_sequences=True))
 
 model.add(LeakyReLU())
 
@@ -78,7 +81,7 @@ model.add(Dropout(0.4))
 
 model.add(BatchNormalization())
 
-model.add(GRU(32, return_sequences=True))
+model.add(recurrent_layer(32, return_sequences=True))
 
 model.add(LeakyReLU())
 
