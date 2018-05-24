@@ -16,7 +16,7 @@ gpu = True
 
 ensure_dirs(["./models", "./models/" + run])
 
-opt = Adam(lr=0.0001, decay=0.00001)
+opt = Adam(lr=0.0001, decay=0.00005)
 
 batch_size = 100
 timeseries_length = 100
