@@ -98,7 +98,11 @@ def extract_features_mfcc(data, sr):
 
 def extract_features_melspec(data, sr):
     n_features = 64
-    melspec = librosa.feature.melspectrogram(data, sr=sr, n_mels=n_features)
+    frame_length = int(np.floor(0.032 * sr))
+    hop_length = int(np.floor(0.016 * sr))
+
+    stft = np.abs(librosa.stft(data, win_length=frame_length, hop_length=hop_length)) ** 1
+    melspec = librosa.feature.melspectrogram(S=stft, n_mels=n_features)
     melspec = librosa.power_to_db(melspec, ref=np.max)
     melspec = np.transpose(melspec)
     melspec_d = librosa.feature.delta(melspec)
