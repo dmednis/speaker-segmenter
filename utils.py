@@ -133,3 +133,18 @@ def degrade(data, sr):
 
 def shuffle(x):
     np.random.shuffle(x)
+
+
+def deoverlap_predictions(predictions, features, timeseries_length, hop_length):
+    deoverlapped = np.ndarray((len(features), 0))
+    print(deoverlapped.shape)
+    for i, frag in enumerate(predictions):
+        for j, pred in enumerate(frag):
+            idx = (i * hop_length) + j
+            features = deoverlapped[idx]
+            deoverlapped[idx] = np.concatenate(features, pred)
+        print(deoverlapped)
+        exit(0)
+
+
+
