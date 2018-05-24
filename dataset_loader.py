@@ -48,8 +48,9 @@ def vad_noise_train():
 
 
 def vad_noise_test():
-    ambience = np.load("./noise/ambience.npy")
-    return ambience
+    ambient_silence = np.load("./noise/ambient-silence.npy")
+    ambient_sounds = np.load("./noise/ambient-sounds.npy")
+    return flatten([ambient_silence, ambient_sounds])
 
 
 if __name__ == "__main__":
