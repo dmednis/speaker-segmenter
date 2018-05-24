@@ -1,30 +1,28 @@
 import numpy as np
+from matplotlib import pyplot as plt
+import librosa
+
+from utils import deoverlap_predictions, defragment_vad
 
 
-def deoverlap_predictions(predictions, features, timeseries_length, hop_length):
-    deoverlapped = np.ndarray((len(features), 0))
-    print(deoverlapped.shape)
-    for i, frag in enumerate(predictions):
-        print(frag)
-        for j, pred in enumerate(frag):
-            idx = (i * hop_length) + j
-            features = deoverlapped[idx]
-            print(idx)
-            print(features)
-            print(pred)
-            print(np.append(features, pred))
-            deoverlapped[idx] = np.append(features, pred)
-        print(deoverlapped)
-        exit(0)
-
-
+audio_filename = "./samples/speech-test.wav"
 features_filename = "./samples/speech-test_features.npy"
 predictions_filename = "samples/predictions_2018-05-24_17-48.npy"
 
+audio, sr = librosa.load(audio_filename)
 predictions = np.load(predictions_filename)
 features = np.load(features_filename)
 
 timeseries_length = 100
 hop_length = 25
 
-deoverlap_predictions(predictions, features, timeseries_length, hop_length)
+preds = deoverlap_predictions(predictions, features, hop_length)
+preds = defragment_vad(preds)
+
+plt.figure(1)
+plt.subplot(211)
+plt.plot(audio)
+
+plt.subplot(212)
+plt.plot(preds)
+plt.show()
