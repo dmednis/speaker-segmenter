@@ -24,19 +24,27 @@ nb_epochs = 150
 
 voice_train = vad_voice_train()
 noise_train = vad_noise_train()
+print("Voice train set shape", voice_train.shape)
+print("Noise train set shape", noise_train.shape)
+train_generator = VADSequence(voice_train,
+                              noise_train,
+                              timeseries_length=timeseries_length,
+                              batch_size=batch_size,
+                              name="train")
+del voice_train
+del noise_train
 
 voice_test = vad_voice_test()
 noise_test = vad_noise_test()
-
-ratio = voice_train.shape[0] / noise_train.shape[0]
-
-print("Noise train set shape", noise_train.shape)
-print("Noise test set shape", noise_test.shape)
-print("Voice train set shape", voice_train.shape)
 print("Voice test set shape", voice_test.shape)
+print("Noise test set shape", noise_test.shape)
+test_generator = VADSequence(voice_test, noise_test,
+                             timeseries_length=timeseries_length,
+                             batch_size=batch_size,
+                             name="test")
+del voice_test
+del noise_test
 
-train_generator = VADSequence(voice_train, noise_train, timeseries_length=timeseries_length, batch_size=batch_size)
-test_generator = VADSequence(voice_test, noise_test, timeseries_length=timeseries_length, batch_size=batch_size)
 
 train_sample = train_generator[0]
 test_sample = test_generator[0]
@@ -64,6 +72,8 @@ model.add(LeakyReLU())
 model.add(BatchNormalization())
 
 model.add(Dropout(0.4))
+
+model.add(ZeroPadding1D(1))
 
 model.add(Conv1D(64, 3))
 
@@ -103,7 +113,8 @@ model.summary()
 
 callbacks = [
     TensorBoard(log_dir='./tensorboard_logs/' + model_name + '-' + run, histogram_freq=0, batch_size=batch_size),
-    ModelCheckpoint("./models/" + model_name + "_" + run + "/model_vad2.{epoch:02d}.hdf5", monitor='val_loss', verbose=0,
+    ModelCheckpoint("./models/" + model_name + "_" + run + "/model_vad2.{epoch:02d}.hdf5", monitor='val_loss',
+                    verbose=0,
                     save_best_only=False,
                     save_weights_only=False,
                     mode='auto', period=1)

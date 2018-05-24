@@ -6,7 +6,8 @@ from utils import flatten
 
 class VADSequence(Sequence):
 
-    def __init__(self, voice, noise, batch_size, timeseries_length=100, hop_length=25, mix_per_amount=1000):
+    def __init__(self, voice, noise, batch_size, timeseries_length=100, hop_length=25, mix_per_amount=1000, name=""):
+        print("Initializing VAD sequence " + name)
         self.voice, self.noise = voice, noise
         self.batch_size = batch_size
         self.timeseries_length = timeseries_length
@@ -38,6 +39,13 @@ class VADSequence(Sequence):
                 self.y[pointer] = np.array([[0] for _ in range(len(noise_fragment))])
                 pointer += 1
 
+        print("Sequence " + name + " cleanup start")
+
+        self.voice = None
+        self.noise = None
+
+        print("Sequence " + name + " cleanup done")
+
         self.x = flatten(self.x)
         self.y = flatten(self.y)
 
@@ -47,12 +55,14 @@ class VADSequence(Sequence):
             self.length += 1
             remainder -= hop_length
 
+        print("Sequence " + name + " initialization done")
+
     def __len__(self):
         return int(np.floor(self.length / self.batch_size))
 
     def __getitem__(self, idx):
-        batch_x = np.ndarray((self.batch_size, self.timeseries_length, self.voice.shape[2]))
-        batch_y = np.ndarray((self.batch_size, self.timeseries_length, 1))
+        batch_x = np.ndarray((self.batch_size, self.timeseries_length, self.x.shape[1]))
+        batch_y = np.ndarray((self.batch_size, self.timeseries_length, self.y.shape[1]))
 
         batch_start = idx * self.batch_size * self.hop_length
         for i in range(self.batch_size):

@@ -8,7 +8,7 @@ from utils import flatten
 def load_or_generate(filename, generator):
     if os.path.isfile(filename):
         print("Loading " + filename)
-        dataset = np.load(filename)
+        dataset = np.load(filename, mmap_mode="r")
         return dataset
     else:
         print("Generating " + filename)
@@ -43,13 +43,13 @@ def vad_voice_test():
 
 
 def vad_noise_train():
-    urbansounds = np.load("./noise/vad_noise.npy")
+    urbansounds = np.load("./noise/vad_noise.npy", mmap_mode="r")
     return urbansounds
 
 
 def vad_noise_test():
-    ambient_silence = np.load("./noise/ambient-silence.npy")
-    ambient_sounds = np.load("./noise/ambient-sounds.npy")
+    ambient_silence = np.load("./noise/ambient-silence.npy", mmap_mode="r")
+    ambient_sounds = np.load("./noise/ambient-sounds.npy", mmap_mode="r")
     return flatten([ambient_silence, ambient_sounds])
 
 
