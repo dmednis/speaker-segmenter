@@ -101,8 +101,7 @@ def extract_features_melspec(data, sr):
     frame_length = int(np.floor(0.032 * sr))
     hop_length = int(np.floor(0.016 * sr))
 
-    stft = np.abs(librosa.stft(data, win_length=frame_length, hop_length=hop_length)) ** 1
-    melspec = librosa.feature.melspectrogram(S=stft, n_mels=n_features)
+    melspec = librosa.feature.melspectrogram(y=data, n_mels=n_features, hop_length=hop_length, n_fft=frame_length)
     melspec = librosa.power_to_db(melspec, ref=np.max)
     melspec = np.transpose(melspec)
     melspec_d = librosa.feature.delta(melspec)
