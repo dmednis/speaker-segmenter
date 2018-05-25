@@ -7,14 +7,17 @@ import datetime
 
 from utils import extract_features_melspec, extract_features_mfcc, flatten
 
-# audio_filename = "./samples/saeima.wav"
+name = "applause"
+run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+
+# audio_filename = "noise_raw/degradations/applause.wav"
 audio_filename = "./samples/speech-test.wav"
 
 data, sr = librosa.load(audio_filename)
 print("SAMPLE RATE", sr)
 print("DATA SHAPE", data.shape)
 features = extract_features_melspec(data, sr)
-np.save("./samples/speech-test_features.npy", features)
+np.save("./samples/" + name + "_" + run, features)
 print("FEATURES SHAPE", features.shape)
 
 model = load_model('models/vad2_2018-05-24_15-53/model_vad2.17.hdf5')
@@ -37,7 +40,7 @@ predictions = model.predict(x, verbose=1)
 
 print("PREDICTIONS SHAPE", predictions.shape)
 
-np.save("./samples/predictions_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M"), predictions)
+np.save("./samples/predictions_" + name + "_" + run, predictions)
 
 predictions = flatten(flatten(predictions))
 
