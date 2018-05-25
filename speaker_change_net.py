@@ -10,7 +10,7 @@ from utils import ensure_dirs
 from SEGSequence import SEGSequence
 from dataset_loader import seg_speakers_train, seg_speakers_test
 
-model_name = "vad2"
+model_name = "seg"
 run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 gpu = False
 
