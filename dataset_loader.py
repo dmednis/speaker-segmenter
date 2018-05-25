@@ -54,4 +54,6 @@ def vad_noise_test():
 
 
 if __name__ == "__main__":
+    vad_voice_train()
+    vad_voice_test()
     print("MAIN")

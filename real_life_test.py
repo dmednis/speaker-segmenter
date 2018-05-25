@@ -7,7 +7,7 @@ import datetime
 
 from utils import extract_features_melspec, extract_features_mfcc, flatten
 
-name = "applause"
+name = "speech"
 run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 # audio_filename = "noise_raw/degradations/applause.wav"
@@ -20,7 +20,7 @@ features = extract_features_melspec(data, sr)
 np.save("./samples/" + name + "_" + run, features)
 print("FEATURES SHAPE", features.shape)
 
-model = load_model('models/vad2_2018-05-24_15-53/model_vad2.17.hdf5')
+model = load_model('models/vad2_2018-05-25_13-32/model_vad2.33.hdf5')
 
 timeseries_length = 100
 hop_length = 25

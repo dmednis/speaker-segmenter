@@ -20,7 +20,7 @@ opt = Adam(lr=0.0001, decay=0.00005)
 
 batch_size = 100
 timeseries_length = 100
-nb_epochs = 150
+nb_epochs = 60
 
 voice_train = vad_voice_train()
 noise_train = vad_noise_train()

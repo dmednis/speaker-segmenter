@@ -6,7 +6,7 @@ from postprocess_utils import deoverlap_predictions, defragment_vad, vad_metrics
 
 audio_filename = "./samples/speech-test.wav"
 features_filename = "./samples/speech-test_features.npy"
-predictions_filename = "samples/predictions_2018-05-24_17-48.npy"
+predictions_filename = "samples/predictions_speech_2018-05-25_15-07.npy"
 
 audio, sr = librosa.load(audio_filename)
 predictions = np.load(predictions_filename)
