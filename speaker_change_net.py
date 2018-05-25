@@ -1,63 +1,131 @@
 from keras.models import Sequential
-from keras.layers.recurrent import LSTM
-from keras.layers import Dense, TimeDistributed, Conv2D, ConvLSTM2D, MaxPooling2D, Flatten
+from keras.layers.recurrent import GRU
+from keras.layers import Dense, Conv1D, LeakyReLU, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D, CuDNNGRU
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
+import datetime
+from matplotlib import pyplot
 
-from SpeakerSequence import SpeakerSequence
+from utils import ensure_dirs
+from SEGSequence import SEGSequence
+from dataset_loader import seg_speakers_train, seg_speakers_test
+
+model_name = "vad2"
+run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+gpu = False
+
+ensure_dirs(["./models", "./models/" + run])
+
+opt = Adam(lr=0.0001, decay=0.00005)
+
+batch_size = 100
+timeseries_length = 100
+nb_epochs = 60
+
+speakers_train = seg_speakers_train()
+print("Speakers train set shape", speakers_train.shape)
+train_generator = SEGSequence(speakers_train,
+                              timeseries_length=timeseries_length,
+                              batch_size=batch_size,
+                              name="train")
+del speakers_train
+
+
+speakers_test = seg_speakers_test()
+print("Speakers test set shape", speakers_test.shape)
+test_generator = SEGSequence(speakers_test,
+                             timeseries_length=timeseries_length,
+                             batch_size=batch_size,
+                             name="test")
+del speakers_test
+
+
+train_sample = train_generator[0]
+test_sample = test_generator[0]
+print("Training X shape: " + str(train_sample[0].shape))
+print("Training Y shape: " + str(train_sample[1].shape))
+print("Test X shape: " + str(test_sample[0].shape))
+print("Test Y shape: " + str(test_sample[1].shape))
+
+print('Building CONV LSTM RNN model ...')
+input_shape = train_sample[0].shape
+
+print(input_shape)
+
+recurrent_layer = CuDNNGRU if gpu else GRU
+
+model = Sequential()
+
+model.add(ZeroPadding1D(1,
+                        input_shape=input_shape[1:]))
+
+model.add(Conv1D(128, 3))
+
+model.add(LeakyReLU())
+
+model.add(BatchNormalization())
+
+model.add(Dropout(0.4))
+
+model.add(ZeroPadding1D(1))
+
+model.add(Conv1D(64, 3))
+
+model.add(LeakyReLU())
+
+model.add(BatchNormalization())
+
+model.add(Dropout(0.4))
+
+model.add(recurrent_layer(64, return_sequences=True))
+
+model.add(LeakyReLU())
+
+model.add(Dropout(0.4))
+
+model.add(BatchNormalization())
+
+model.add(recurrent_layer(32, return_sequences=True))
+
+model.add(LeakyReLU())
+
+model.add(Dropout(0.4))
+
+model.add(TimeDistributed(Dense(10)))
+
+model.add(LeakyReLU())
+
+model.add(BatchNormalization())
+
+model.add(Dropout(0.4))
+
+model.add(TimeDistributed(Dense(1, activation="sigmoid")))
+
+print("Compiling ...")
+model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
+model.summary()
 
 callbacks = [
-    TensorBoard(log_dir='./tensorboard_logs', histogram_freq=0, batch_size=35),
-    ModelCheckpoint("./models/model.{epoch:02d}.hdf5", monitor='val_loss', verbose=0, save_best_only=False,
+    TensorBoard(log_dir='./tensorboard_logs/' + model_name + '-' + run, histogram_freq=0, batch_size=batch_size),
+    ModelCheckpoint("./models/" + model_name + "_" + run + "/model_seg.{epoch:02d}.hdf5", monitor='val_loss',
+                    verbose=0,
+                    save_best_only=False,
                     save_weights_only=False,
                     mode='auto', period=1)
 ]
 
-# Keras optimizer defaults:
-# Adam   : lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8, decay=0.
-# RMSprop: lr=0.001, rho=0.9, epsilon=1e-8, decay=0.
-# SGD    : lr=0.01, momentum=0., decay=0.
-opt = Adam()
-
-batch_size = 1
-nb_epochs = 3
-
-train_generator = SpeakerSequence("speakers/train_o", batch_size)
-test_generator = SpeakerSequence("speakers/test_o", batch_size)
-
-train_sample = train_generator.__getitem__(0)
-# test_sample = test_generator.__getitem__(0)
-
-print("Training X shape: " + str(train_sample[0].shape))
-print("Training Y shape: " + str(train_sample[1].shape))
-# print("Test X shape: " + str(test_sample[0].shape))
-# print("Test Y shape: " + str(test_sample[1].shape))
-
-print('Build LSTM RNN model ...')
-model = Sequential()
-model.add(Conv2D(32, (3, 3), data_format="channels_last", input_shape=(85, 1025, 1)))
-model.summary()
-model.add(ConvLSTM2D())
-model.add(LSTM(units=128, dropout=0.05, recurrent_dropout=0.35, return_sequences=True))
-model.add(LSTM(units=32, dropout=0.05, recurrent_dropout=0.35, return_sequences=False))
-model.add(Dense(units=4, activation='softmax'))
-
-print("Compiling ...")
-model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-model.summary()
-
 print("Training ...")
-model.fit_generator(train_generator, batch_size=batch_size, epochs=nb_epochs, callbacks=callbacks)
+ensure_dirs(["./models", "./models/" + model_name + "_" + run])
 
-print("\nTesting ...")
-score, accuracy = model.evaluate_generator(test_generator, batch_size=batch_size, verbose=1)
-print("Test loss:  ", score)
-print("Test accuracy:  ", accuracy)
+history = model.fit_generator(train_generator,
+                              epochs=nb_epochs,
+                              validation_data=test_generator,
+                              callbacks=callbacks)
 
-# 1 epoch
-# Test loss:   0.056034792951317434
-# Test accuracy:   0.980385290135853
-
-# 35 epoch
-# Test loss:   0.01425005547713424
-# Test accuracy:   0.9953298309847269
+pyplot.plot(history.history['loss'])
+pyplot.plot(history.history['val_loss'])
+pyplot.title('model train vs validation loss')
+pyplot.ylabel('loss')
+pyplot.xlabel('epoch')
+pyplot.legend(['train', 'validation'], loc='upper right')
+pyplot.show()

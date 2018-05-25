@@ -13,7 +13,7 @@ def load_or_generate(filename, generator):
     else:
         print("Generating " + filename)
         dataset = generator()
-        np.save(filename, dataset)
+        # np.save(filename, dataset)
         return dataset
 
 
@@ -24,6 +24,15 @@ def generate_vad_voice(folder):
         data = np.load(speaker)
         all_speakers.append(data)
     return flatten(all_speakers)
+
+
+def generate_seg_speakers(folder):
+    speakers = glob.glob("./speakers/" + folder + "/*.npy")
+    all_speakers = []
+    for speaker in speakers:
+        data = np.load(speaker)
+        all_speakers.append(data)
+    return np.array(all_speakers)
 
 
 def generate_vad_voice_train():
@@ -53,7 +62,23 @@ def vad_noise_test():
     return flatten([ambient_silence, ambient_sounds])
 
 
+def generate_seg_speakers_train():
+    return generate_seg_speakers("TIMIT")
+
+
+def generate_seg_speakers_test():
+    return generate_seg_speakers("LIBRISPEECH")
+
+
+def seg_speakers_train():
+    return load_or_generate("./speakers/seg_speakers_train.npy", generate_seg_speakers_train)
+
+
+def seg_speakers_test():
+    return load_or_generate("./speakers/seg_speakers_test.npy", generate_seg_speakers_test)
+
+
 if __name__ == "__main__":
-    vad_voice_train()
-    vad_voice_test()
+    seg_speakers_train()
+    seg_speakers_test()
     print("MAIN")
