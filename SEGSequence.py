@@ -20,7 +20,7 @@ class SEGSequence(Sequence):
             total += speaker.shape[0]
             sp_labels = []
             for i in range(len(speaker)):
-                if i < 3 or i >= len(speaker) - 3:
+                if i < 10 or i >= len(speaker) - 10:
                     sp_labels.append([1])
                 else:
                     sp_labels.append([0])
