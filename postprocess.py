@@ -6,7 +6,7 @@ from postprocess_utils import deoverlap_predictions, defragment_vad, vad_metrics
 
 audio_filename = "./samples/speech-test.wav"
 features_filename = "./samples/speech-test_features.npy"
-predictions_filename = "samples/predictions_speech_2018-05-25_15-07.npy"
+predictions_filename = "samples/predictions_speech_2018-05-26_14-44.npy"
 
 audio, sr = librosa.load(audio_filename)
 predictions = np.load(predictions_filename)
@@ -24,7 +24,7 @@ lium = [(0.0,8.039999961853027), (10.640000343322754,13.15000033378601),
         (23.809999465942383,32.9399995803833), (32.939998626708984,37.64999866485596),
         (37.650001525878906,40.20000147819519)]
 
-vad_metrics(lium, reference)
+vad_metrics(preds, reference)
 
 plt.figure(1)
 plt.subplot(211)

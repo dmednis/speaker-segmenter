@@ -1,6 +1,6 @@
 from keras.models import Sequential
-from keras.layers.recurrent import GRU
-from keras.layers import Dense, Conv1D, LeakyReLU, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D, CuDNNGRU
+from keras.layers.recurrent import LSTM
+from keras.layers import Dense, Conv1D, LeakyReLU, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D, CuDNNLSTM
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import datetime
@@ -48,7 +48,7 @@ input_shape = train_sample[0].shape
 
 print(input_shape)
 
-recurrent_layer = CuDNNGRU if gpu else GRU
+recurrent_layer = CuDNNLSTM if gpu else LSTM
 
 model = Sequential()
 
