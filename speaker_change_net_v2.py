@@ -1,6 +1,6 @@
 from keras.models import Sequential
-from keras.layers.recurrent import GRU
-from keras.layers import Dense, Conv1D, LeakyReLU, Dropout, BatchNormalization, TimeDistributed, ZeroPadding1D, CuDNNGRU
+from keras.layers.recurrent import GRU, LSTM
+from keras.layers import Dense, Bidirectional, TimeDistributed, CuDNNGRU, CuDNNLSTM
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import datetime
@@ -10,7 +10,7 @@ from utils import ensure_dirs
 from SEGSequence import SEGSequence
 from dataset_loader import seg_speakers_train, seg_speakers_test
 
-model_name = "seg"
+model_name = "seg2"
 run = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 gpu = True
 
@@ -52,57 +52,15 @@ recurrent_layer = CuDNNGRU if gpu else GRU
 
 model = Sequential()
 
-model.add(ZeroPadding1D(1,
-                        input_shape=input_shape[1:]))
+model.add(Bidirectional(CuDNNLSTM(64, return_sequences=True), input_shape=input_shape[1:]))
 
-model.add(Conv1D(128, 3))
+model.add(Bidirectional(CuDNNLSTM(32, return_sequences=True)))
 
-model.add(LeakyReLU())
+model.add(TimeDistributed(Dense(40, activation="tanh")))
 
-model.add(BatchNormalization())
-
-model.add(Dropout(0.4))
-
-model.add(ZeroPadding1D(1))
-
-model.add(Conv1D(64, 3))
-
-model.add(LeakyReLU())
-
-model.add(BatchNormalization())
-
-model.add(Dropout(0.4))
-
-model.add(recurrent_layer(64, return_sequences=True))
-
-model.add(LeakyReLU())
-
-model.add(Dropout(0.4))
-
-model.add(BatchNormalization())
-
-model.add(recurrent_layer(32, return_sequences=True))
-
-model.add(LeakyReLU())
-
-model.add(Dropout(0.4))
-
-model.add(TimeDistributed(Dense(40)))
-
-model.add(LeakyReLU())
-
-model.add(Dropout(0.4))
-
-model.add(TimeDistributed(Dense(10)))
-
-model.add(LeakyReLU())
-
-model.add(BatchNormalization())
-
-model.add(Dropout(0.4))
+model.add(TimeDistributed(Dense(10, activation="tanh")))
 
 model.add(TimeDistributed(Dense(1, activation="sigmoid")))
-
 print("Compiling ...")
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 model.summary()
