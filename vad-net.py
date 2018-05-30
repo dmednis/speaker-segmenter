@@ -135,3 +135,62 @@ pyplot.ylabel('loss')
 pyplot.xlabel('epoch')
 pyplot.legend(['train', 'validation'], loc='upper right')
 pyplot.show()
+
+
+def model(input_shape, optimizer):
+    print('Building CONV LSTM RNN model ...')
+
+    recurrent_layer = CuDNNGRU if gpu else GRU
+
+    model = Sequential()
+
+    model.add(ZeroPadding1D(1,
+                            input_shape=input_shape))
+
+    model.add(Conv1D(128, 3))
+
+    model.add(LeakyReLU())
+
+    model.add(BatchNormalization())
+
+    model.add(Dropout(0.4))
+
+    model.add(ZeroPadding1D(1))
+
+    model.add(Conv1D(64, 3))
+
+    model.add(LeakyReLU())
+
+    model.add(BatchNormalization())
+
+    model.add(Dropout(0.4))
+
+    model.add(recurrent_layer(64, return_sequences=True))
+
+    model.add(LeakyReLU())
+
+    model.add(Dropout(0.4))
+
+    model.add(BatchNormalization())
+
+    model.add(recurrent_layer(32, return_sequences=True))
+
+    model.add(LeakyReLU())
+
+    model.add(Dropout(0.4))
+
+    model.add(TimeDistributed(Dense(10)))
+
+    model.add(LeakyReLU())
+
+    model.add(BatchNormalization())
+
+    model.add(Dropout(0.4))
+
+    model.add(TimeDistributed(Dense(1, activation="sigmoid")))
+
+    print("Compiling ...")
+    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    model.summary()
+
+    return model

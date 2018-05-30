@@ -11,10 +11,11 @@ def deoverlap_predictions(predictions, features, hop_length):
     for i, f in enumerate(predictions):
         for j, p in enumerate(f):
             idx = (i * hop_length) + j
-            if p >= 0.5:
-                deoverlapped[idx].append(1)
-            else:
-                deoverlapped[idx].append(0)
+            if idx < len(features):
+                if p >= 0.5:
+                    deoverlapped[idx].append(1)
+                else:
+                    deoverlapped[idx].append(0)
 
     averaged = np.zeros(len(features))
 
@@ -52,7 +53,7 @@ def defragment_vad(predictions):
     return defragmented
 
 
-def vad_voice_segments(predictions, frame_times):
+def voice_segments(predictions, frame_times):
     segments = []
     mode = 0
     start = 0
@@ -74,7 +75,7 @@ def vad_metrics(predictions,
                 window_length=int(np.floor(0.032 * 22050)),
                 hop_length=int(np.floor(0.016 * 22050))):
     frame_times = librosa.frames_to_time(range(len(predictions)), sr=sr, hop_length=hop_length, n_fft=window_length)
-    predicted_segments = vad_voice_segments(predictions, frame_times)
+    predicted_segments = voice_segments(predictions, frame_times)
 
     hypothesis = Annotation()
     for seg in predicted_segments:
@@ -93,6 +94,33 @@ def vad_metrics(predictions,
                "error": error,
                "recall": recall,
                "accuracy": accuracy}
+
+    print(metrics)
+
+    return metrics
+
+
+def seg_metrics(predictions,
+                reference_segments,
+                sr=22050,
+                window_length=int(np.floor(0.032 * 22050)),
+                hop_length=int(np.floor(0.016 * 22050))):
+    # frame_times = librosa.frames_to_time(range(len(predictions)), sr=sr, hop_length=hop_length, n_fft=window_length)
+    # predicted_segments = voice_segments(predictions, frame_times)
+
+    hypothesis = Annotation()
+    for seg in predictions:
+        hypothesis[Segment(seg[0], seg[1])] = 1
+
+    reference = Annotation()
+    for seg in reference_segments:
+        reference[Segment(seg[0], seg[1])] = 1
+
+    coverage = SegmentationCoverage()(reference, hypothesis)
+    purity = SegmentationPurity()(reference, hypothesis)
+
+    metrics = {"coverage": coverage,
+               "purity": purity}
 
     print(metrics)
 

@@ -17,7 +17,7 @@ def main():
 
     plt.figure(figsize=(12, 4))
     librosa.display.specshow(features, sr=sr, x_axis='time', y_axis='mel')
-    plt.title('Mel power spectrogram ')
+    plt.title('Mel-frekvenču spektrogramma')
     plt.colorbar(format='%+02.0f dB')
     plt.tight_layout()
     plt.show()
